@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle Financeiro</title>
+  <style>
+    :root{
+      --grad-a:#4facfe; --grad-b:#00f2fe; --primary:#4facfe; --primary-2:#00c6fb; --text:#333; --muted:#666; --bg:#f5fafe;
+    }
+    *{ box-sizing:border-box }
+    body { font-family: Arial, sans-serif; margin: 0; background: linear-gradient(135deg, var(--grad-a), var(--grad-b)); }
+    h1 { text-align: center; color: #fff; padding: 22px 14px; margin:0; }
+    .wrap { max-width: 1000px; margin: 24px auto 60px; padding: 0 14px; }
+    .card { background:#fff; border-radius:16px; box-shadow:0 12px 24px rgba(0,0,0,.12); padding:22px; }
+    .toolbar{ display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:16px }
+    .btn { background: var(--primary); color:#fff; border:none; padding:10px 14px; border-radius:10px; cursor:pointer; transition:.25s; font-weight:600 }
+    .btn:hover{ background: var(--primary-2) }
+    .btn-outline{ background:#fff; color:var(--primary); border:2px solid var(--primary) }
+
+    .grid{ display:grid; grid-template-columns:1fr; gap:22px }
+    @media(min-width:900px){ .grid{ grid-template-columns:1fr 1fr } }
+
+    h2{ color:var(--text); border-left:6px solid var(--primary); padding-left:10px; margin:0 0 10px }
+
+    .inputs{ display:flex; flex-wrap:wrap; gap:10px }
+    input, .btn, label.file-label{ font-size:14px }
+    input{ padding:10px 12px; border:1px solid #d7e2ee; border-radius:10px; min-width:140px }
+    input:focus{ outline:none; border-color:var(--primary); box-shadow:0 0 0 3px rgba(79,172,254,.2) }
+
+    table{ width:100%; border-collapse: collapse; margin-top:12px; border-radius:14px; overflow:hidden; box-shadow:0 6px 14px rgba(0,0,0,.08) }
+    th,td{ padding:10px; text-align:center; border:1px solid #eef2f7 }
+    th{ background: var(--primary); color:#fff }
+    tr:nth-child(even){ background:#fafcff }
+    tr:hover{ background:#f2f9ff }
+
+    .resumos{ display:grid; gap:12px; grid-template-columns:1fr; margin-top:6px }
+    @media(min-width:600px){ .resumos{ grid-template-columns:1fr 1fr } }
+    .resumo{ background:var(--bg); border:1px solid #e8f0fb; border-radius:12px; padding:12px 14px; font-size:16px; display:flex; justify-content:space-between; align-items:center }
+    .resumo b{ font-size:18px }
+
+    .danger{ background:#fff1f2; color:#b91c1c; border-color:#fecaca }
+    .ok{ background:#effdf5; color:#065f46; border-color:#b7f7d2 }
+
+    .actions button{ padding:6px 10px; border-radius:8px }
+    .del{ background:#ff4d4f; color:#fff; border:none }
+    .del:hover{ background:#ff1f23 }
+
+    .hidden{ display:none }
+  </style>
+</head>
+<body>
+  <h1>💰 Controle Financeiro</h1>
+  <div class="wrap">
+    <div class="card">
+      <div class="toolbar">
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+          <button class="btn" id="btnExport">⬇️ Baixar backup (.json)</button>
+          <input type="file" id="fileImport" accept="application/json" class="hidden">
+          <label for="fileImport" class="btn btn-outline file-label">⬆️ Importar backup</label>
+        </div>
+        <button class="btn btn-outline" id="btnClear">🧹 Limpar todos os dados</button>
+      </div>
+
+      <div class="grid">
+        <!-- Entradas -->
+        <section>
+          <h2>Entradas</h2>
+          <div class="inputs">
+            <input type="text" id="entradaDesc" placeholder="Descrição">
+            <input type="text" id="entradaValor" placeholder="Valor (ex: 100 ou 100,50)" inputmode="decimal">
+            <input type="date" id="entradaData">
+            <button class="btn" id="btnEntrada">Adicionar</button>
+          </div>
+          <table id="tabelaEntradas">
+            <tr><th>Descrição</th><th>Valor</th><th>Data</th><th>Ações</th></tr>
+          </table>
+        </section>
+
+        <!-- Saídas -->
+        <section>
+          <h2>Saídas</h2>
+          <div class="inputs">
+            <input type="text" id="saidaDesc" placeholder="Descrição">
+            <input type="text" id="saidaValor" placeholder="Valor (ex: 50 ou 50,75)" inputmode="decimal">
+            <input type="date" id="saidaData">
+            <button class="btn" id="btnSaida">Adicionar</button>
+          </div>
+          <table id="tabelaSaidas">
+            <tr><th>Descrição</th><th>Valor</th><th>Data</th><th>Ações</th></tr>
+          </table>
+        </section>
+      </div>
+
+      <!-- Dívidas -->
+      <section style="margin-top:22px">
+        <h2>Dívidas</h2>
+        <div class="inputs">
+          <input type="text" id="dividaNome" placeholder="Nome da dívida">
+          <input type="text" id="dividaTotal" placeholder="Valor total (ex: 1200,00)" inputmode="decimal">
+          <input type="text" id="dividaPago" placeholder="Já pago (ex: 300,00)" inputmode="decimal">
+          <input type="date" id="dividaData">
+          <button class="btn" id="btnDivida">Adicionar</button>
+        </div>
+        <table id="tabelaDividas">
+          <tr><th>Nome</th><th>Total</th><th>Pago</th><th>Falta</th><th>Data</th><th>Ações</th></tr>
+        </table>
+      </section>
+
+      <!-- Resumo -->
+      <section style="margin-top:22px">
+        <h2>Resumo</h2>
+        <div class="resumos">
+          <div class="resumo ok">📈 <span>Total Entradas</span> <b id="totalEntradas">R$ 0,00</b></div>
+          <div class="resumo danger">📉 <span>Total Saídas</span> <b id="totalSaidas">R$ 0,00</b></div>
+          <div class="resumo">💵 <span>Saldo Atual</span> <b id="saldo">R$ 0,00</b></div>
+          <div class="resumo">⚠️ <span>Dívidas Restantes</span> <b id="totalDividas">R$ 0,00</b></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    function storageOK(){
+      try{ const k='__test__'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true }catch(e){ return false }
+    }
+    function parseValor(v){
+      if(v===undefined||v===null) return NaN;
+      if(typeof v==='number') return v;
+      v = (''+v).trim();
+      if(!v) return NaN;
+      v = v.replace(/\./g,'').replace(/,/g,'.');
+      return Number(v);
+    }
+    function brl(n){
+      n = Number(n)||0; return n.toLocaleString('pt-BR',{ style:'currency', currency:'BRL' });
+    }
+    function today(){ return new Date().toISOString().slice(0,10) }
+
+    let entradas = [], saidas = [], dividas = [];
+
+    function carregar(){
+      try{
+        entradas = JSON.parse(localStorage.getItem('entradas'))||[];
+        saidas   = JSON.parse(localStorage.getItem('saidas'))||[];
+        dividas  = JSON.parse(localStorage.getItem('dividas'))||[];
+      }catch(e){ entradas=[]; saidas=[]; dividas=[]; }
+    }
+    function salvar(){
+      if(!storageOK()){ alert('Seu navegador bloqueou o armazenamento local.'); return }
+      localStorage.setItem('entradas', JSON.stringify(entradas));
+      localStorage.setItem('saidas',   JSON.stringify(saidas));
+      localStorage.setItem('dividas',  JSON.stringify(dividas));
+    }
+
+    function atualizarResumo(){
+      const totE = entradas.reduce((a,e)=>a+e.valor,0);
+      const totS = saidas.reduce((a,e)=>a+e.valor,0);
+      const totD = dividas.reduce((a,d)=>a+(d.total-d.pago),0);
+      document.getElementById('totalEntradas').textContent = brl(totE);
+      document.getElementById('totalSaidas').textContent   = brl(totS);
+      document.getElementById('saldo').textContent         = brl(totE - totS);
+      document.getElementById('totalDividas').textContent  = brl(totD);
+    }
+    function render(){
+      const tE = document.getElementById('tabelaEntradas');
+      tE.innerHTML = '<tr><th>Descrição</th><th>Valor</th><th>Data</th><th>Ações</th></tr>';
+      entradas.forEach((e,i)=>{
+        tE.innerHTML += `<tr>
+          <td>${e.desc}</td><td>${brl(e.valor)}</td><td>${e.data||''}</td>
+          <td><button class="del" onclick="removerEntrada(${i})">Excluir</button></td>
+        </tr>`;
+      });
+      const tS = document.getElementById('tabelaSaidas');
+      tS.innerHTML = '<tr><th>Descrição</th><th>Valor</th><th>Data</th><th>Ações</th></tr>';
+      saidas.forEach((s,i)=>{
+        tS.innerHTML += `<tr>
+          <td>${s.desc}</td><td>${brl(s.valor)}</td><td>${s.data||''}</td>
+          <td><button class="del" onclick="removerSaida(${i})">Excluir</button></td>
+        </tr>`;
+      });
+      const tD = document.getElementById('tabelaDividas');
+      tD.innerHTML = '<tr><th>Nome</th><th>Total</th><th>Pago</th><th>Falta</th><th>Data</th><th>Ações</th></tr>';
+      dividas.forEach((d,i)=>{
+        const falta = (d.total - d.pago);
+        tD.innerHTML += `<tr>
+          <td>${d.nome}</td><td>${brl(d.total)}</td><td>${brl(d.pago)}</td><td>${brl(falta)}</td><td>${d.data||''}</td>
+          <td><button class="del" onclick="removerDivida(${i})">Excluir</button></td>
+        </tr>`;
+      });
+      atualizarResumo();
+    }
+
+    function addEntrada(){
+      const desc = document.getElementById('entradaDesc').value.trim();
+      const valor = parseValor(document.getElementById('entradaValor').value);
+      const data = document.getElementById('entradaData').value || today();
+      if(!desc || isNaN(valor)){ alert('Preencha a descrição e um valor válido.'); return }
+      entradas.push({desc, valor, data}); salvar(); render();
+      document.getElementById('entradaDesc').value = '';
+      document.getElementById('entradaValor').value = '';
+      document.getElementById('entradaData').value = '';
+    }
+    function addSaida(){
+      const desc = document.getElementById('saidaDesc').value.trim();
+      const valor = parseValor(document.getElementById('saidaValor').value);
+      const data = document.getElementById('saidaData').value || today();
+      if(!desc || isNaN(valor)){ alert('Preencha a descrição e um valor válido.'); return }
+      saidas.push({desc, valor, data}); salvar(); render();
+      document.getElementById('saidaDesc').value = '';
+      document.getElementById('saidaValor').value = '';
+      document.getElementById('saidaData').value = '';
+    }
+    function addDivida(){
+      const nome = document.getElementById('dividaNome').value.trim();
+      const total = parseValor(document.getElementById('dividaTotal').value);
+      const pago = parseValor(document.getElementById('dividaPago').value) || 0;
+      const data = document.getElementById('dividaData').value || today();
+      if(!nome || isNaN(total)){ alert('Preencha o nome e o valor total válido.'); return }
+      dividas.push({nome, total, pago, data}); salvar(); render();
+      document.getElementById('dividaNome').value = '';
+      document.getElementById('dividaTotal').value = '';
+      document.getElementById('dividaPago').value = '';
+      document.getElementById('dividaData').value = '';
+    }
+
+    function removerEntrada(i){ entradas.splice(i,1); salvar(); render(); }
+    function removerSaida(i){ saidas.splice(i,1); salvar(); render(); }
+    function removerDivida(i){ dividas.splice(i,1); salvar(); render(); }
+
+    document.getElementById('btnEntrada').onclick = addEntrada;
+    document.getElementById('btnSaida').onclick   = addSaida;
+    document.getElementById('btnDivida').onclick  = addDivida;
+
+    // Exportar
+    document.getElementById('btnExport').onclick = ()=>{
+      const dados = {entradas, saidas, dividas};
+      const blob = new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download='backup_financeiro.json'; a.click();
+      URL.revokeObjectURL(url);
+    };
+    // Importar
+    document.getElementById('fileImport').onchange = (ev)=>{
+      const file = ev.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = e=>{
+        try{
+          const dados = JSON.parse(e.target.result);
+          entradas = dados.entradas||[]; saidas = dados.saidas||[]; dividas = dados.dividas||[];
+          salvar(); render();
+        }catch(err){ alert('Arquivo inválido!') }
+      };
+      reader.readAsText(file);
+    };
+    // Limpar
+    document.getElementById('btnClear').onclick = ()=>{
+      if(confirm('Tem certeza que deseja apagar todos os dados?')){
+        entradas=[]; saidas=[]; dividas=[]; salvar(); render();
+      }
+    };
+
+    carregar(); render();
+  </script>
+</body>
+</html>
